@@ -19,7 +19,6 @@ int byteSend;
 #define MODBUS_ID 0x01
 #define MODBUS_FC06_BYTE 0x06
 #define MODBUS_ADDR_SPEED 0x20
-#define FW_VERSION 101
 
 unsigned int High_frequency = 5000;
 unsigned int Middle_frequency = 3000;
@@ -44,7 +43,7 @@ byte LowSpeed[] = {0x01, 0x06, 0x20, 0x01, 0x03, 0xE8, 0xD3, 0x74};
 byte ReadStatus[] = {0x01, 0x03, 0x21, 0x00, 0x00, 0x01, 0x8E, 0x36};
 
 
-byte SetSpeedCommend[] = {0x01, 0x06, 0x20, 0x01, 0x00, 0x00, 0x00, 0x00};
+byte SetSpeedCommend[] = {0x01, 0x06, 0x20, 0x00, 0x00, 0x02, 0x00, 0x00};
 
 
 //modbus buffer
@@ -71,11 +70,16 @@ void setup()
 void loop() {
   // main 1.read BT commend 2.Write commend to Delta VFD 3.Read error code from Delta VFD
   Motion_val = KEY_NOTHING;
-  UART_Bluetooth();
-  VFD_Control(Motion_val);
-  VFD_Monitor();
-  Serial.print("Motion_val :");
-  Serial.println(Motion_val);
+  //  UART_Bluetooth();
+  //  VFD_Control(Motion_val);
+  //  VFD_Monitor();
+  CommendCRC(SetSpeedCommend);
+  for (int i = 0; i < 8 ; i++) {
+    Serial.print(SetSpeedCommend[i], HEX);         // Send byte to Remote inverter
+    Serial.print(" ,"); 
+  }
+  Serial.println(""); 
+  delay(1000);
 
 }
 
@@ -116,16 +120,15 @@ void VFD_Control(unsigned char Control_input) {
     }
   }
   else if (Control_input == KEY_SETSPEED) {
-    for (int i = 0; i < 8 ; i++) {
-      Serial2.write(SetSpeedCommend[i]);          // Send byte to Remote inverter
-    }
-    for (int i = 0; i < 8 ; i++) {
-      Serial.print(SetSpeedCommend[i], HEX);         // Send byte to Remote inverter
-      Serial.print(" ,");
-    }
-    Serial.println();
-  }
 
+    for (int i = 0; i < 8 ; i++) {
+      Serial2.write(LowSpeed[i]);          // Send byte to Remote inverter
+    }
+    for (int i = 0; i < 8 ; i++) {
+    Serial.print(SetSpeedCommend[i], HEX);         // Send byte to Remote inverter
+    Serial.print(" ,"); 
+  }
+  }
   delay(50);
 }
 
@@ -133,9 +136,9 @@ void VFD_Monitor() {
   // Read Delta Converter modbus address 2100
 
   // clear the old buffer
-//  digitalWrite(SSerialTxControl, RS485Receive);  // Enable  RS485Receive
-//  delay(20);
-//  Serial2.flush();
+  //  digitalWrite(SSerialTxControl, RS485Receive);  // Enable  RS485Receive
+  //  delay(20);
+  //  Serial2.flush();
 
   // read 2100H status
   digitalWrite(SSerialTxControl, RS485Transmit);  // Enable  RS485Receive
@@ -185,7 +188,7 @@ void VFD_Monitor() {
 }
 
 void UART_Bluetooth() {
-  
+
   // initial BL_Buffer = 0x0
   for (int i = 0; i < 5; i++) {
     BL_Buffer[i] = 0x0;
@@ -210,56 +213,38 @@ void UART_Bluetooth() {
   // 55 ,56,57 = speed , 50 = stop ,53 = start, 52= change, 00 = nothing
   // 58 = specific speed, packet 0x41,0x42,0x58,0x10,0x10 -> speed = 4112
   // Return the Key definition.
-
-  unsigned int speedValue = 0;
   if (BL_Buffer[0] == 0x41 && BL_Buffer[1] == 0x42) {
     switch (BL_Buffer[2]) {
-    case 0x55:
-      Motion_val = KEY_HighSpeed;
-      break;
-    case 0x56:
-      Motion_val = KEY_MiddleSpeed;
-      break;
-    case 0x57:
-      Motion_val = KEY_LowSpeed;
-      break;
-    case 0x50:
-      Motion_val = KEY_Stop;
-      break;
-    case 0x53:
-      Motion_val = KEY_Start;
-      break;
-    case 0x52:
-      Motion_val = KEY_Change;
-      break;
-    case 0x58:
-      Motion_val = KEY_SETSPEED;
-      // ble give ASCII code, so ASCII 0 = 48
-      if ( (BL_Buffer[3] - '0') == '0' ){
-        speedValue = (BL_Buffer[3] - '0');
-      }
-      else{
-        speedValue = (BL_Buffer[3] - '0')*10 + (BL_Buffer[4] - '0') ;
-      }
-      speedValue *= 100;
-      SetSpeedCommend[4] = (char)(speedValue / 256);
-      SetSpeedCommend[5] = (char)speedValue % 256;
-      CommendCRC(SetSpeedCommend);
-      // Serial.print("speedValue : ");
-      // Serial.println(speedValue); 
-      // Serial.print(SetSpeedCommend[4], HEX);        
-      // Serial.print(" ,");
-      // Serial.print(SetSpeedCommend[5], HEX);
-      // Serial.println("");
-      
-      break;
-    case 0x00:
-      Motion_val = KEY_NOTHING;
-      break;
-    default:
-      // if nothing else matches, do the default
-      // default is optional
-      break;
+      case 0x55:
+        Motion_val = KEY_HighSpeed;
+        break;
+      case 0x56:
+        Motion_val = KEY_MiddleSpeed;
+        break;
+      case 0x57:
+        Motion_val = KEY_LowSpeed;
+        break;
+      case 0x50:
+        Motion_val = KEY_Stop;
+        break;
+      case 0x53:
+        Motion_val = KEY_Start;
+        break;
+      case 0x52:
+        Motion_val = KEY_Change;
+        break;
+      case 0x58:
+        Motion_val = KEY_SETSPEED;
+        SetSpeedCommend[4] = BL_Buffer[3];
+        SetSpeedCommend[5] = BL_Buffer[4];
+        break;
+      case 0x00:
+        Motion_val = KEY_NOTHING;
+        break;
+      default:
+        // if nothing else matches, do the default
+        // default is optional
+        break;
     }
 
   }
