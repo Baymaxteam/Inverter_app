@@ -83,39 +83,39 @@ void VFD_Control(unsigned char Control_input) {
 
   if (Control_input == KEY_Stop) {
     for (int i = 0; i < 8 ; i++) {
-      Serial2.write(StopCommend[i]);          // Send byte to Remote Arduino
+      Serial2.write(StopCommend[i]);          // Send byte to Remote inverter
     }
   }
   else if (Control_input == KEY_Start) {
     for (int i = 0; i < 8 ; i++) {
-      Serial2.write(StartCommend[i]);          // Send byte to Remote Arduino
+      Serial2.write(StartCommend[i]);          // Send byte to Remote inverter
     }
 
   }
   else if (Control_input == KEY_Change) {
     for (int i = 0; i < 8 ; i++) {
-      Serial2.write(ChangeCommend[i]);          // Send byte to Remote Arduino
+      Serial2.write(ChangeCommend[i]);          // Send byte to Remote inverter
     }
   }
   else if (Control_input == KEY_HighSpeed) {
     for (int i = 0; i < 8 ; i++) {
-      Serial2.write(HighSpeed[i]);          // Send byte to Remote Arduino
+      Serial2.write(HighSpeed[i]);          // Send byte to Remote inverter
     }
   }
   else if (Control_input == KEY_MiddleSpeed) {
     for (int i = 0; i < 8 ; i++) {
-      Serial2.write(MiddleSpeed[i]);          // Send byte to Remote Arduino
+      Serial2.write(MiddleSpeed[i]);          // Send byte to Remote inverter
     }
   }
   else if (Control_input == KEY_LowSpeed) {
     for (int i = 0; i < 8 ; i++) {
-      Serial2.write(LowSpeed[i]);          // Send byte to Remote Arduino
+      Serial2.write(LowSpeed[i]);          // Send byte to Remote inverter
     }
   }
   else if (Control_input == KEY_SETSPEED) {
 
     for (int i = 0; i < 8 ; i++) {
-      Serial2.write(LowSpeed[i]);          // Send byte to Remote Arduino
+      Serial2.write(LowSpeed[i]);          // Send byte to Remote inverter
     }
   }
   delay(50);
